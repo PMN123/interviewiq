@@ -4,7 +4,7 @@
 
 ## 🎥 Demo
 
-[![InterviewIQ Demo](https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg)](https://youtu.be/6iDoK4Sc9AQ)
+[![InterviewIQ Demo](https://img.youtube.com/vi/6iDoK4Sc9AQ/maxresdefault.jpg)](https://youtu.be/6iDoK4Sc9AQ)
 
 
 ## 📋 Project Overview
