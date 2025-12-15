@@ -295,9 +295,9 @@ This project is created for educational purposes as part of CS390 Capstone.
 
 ## 👨‍💻 Author
 
-**Your Name**  
+**Praniil Nagaraj, Monish Jonnadula*  
 CS390 Capstone Project  
-University Name
+Purdue University
 
 ---
 
