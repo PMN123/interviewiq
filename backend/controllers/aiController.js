@@ -9,6 +9,16 @@ const getOpenAIClient = () => {
   });
 };
 
+//Clean speech
+const cleanForSpeech = (text) => {
+  return text
+    .replace(/\n+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/[*_#]/g, '')
+    .trim();
+};
+
+
 // @desc    Generate interview question using OpenAI
 // @route   POST /api/ai/generate-question
 // @access  Private
@@ -126,20 +136,31 @@ const analyzeAnswer = async (req, res, next) => {
 
     const openai = getOpenAIClient();
 
-    const prompt = `You are an expert interview coach providing constructive feedback.
+    const prompt = `
+You are InterviewIQ, an AI interview coach.
 
-Interview Question: "${question}"
+Interview Question:
+${question}
 
-Candidate's Answer: "${userAnswer}"
+Candidate Answer:
+${userAnswer}
 
-Please analyze this answer and provide structured feedback including:
+Respond in VALID JSON ONLY using this exact format:
 
-1. **Strengths**: What the candidate did well
-2. **Areas for Improvement**: What could be better
-3. **Suggested Approach**: How to improve the answer
-4. **Overall Assessment**: Brief summary (1-2 sentences)
+{
+  "spoken": "2–3 sentence spoken feedback, encouraging and conversational.",
+  "strengths": "Short text summary.",
+  "improvements": "Short text summary.",
+  "suggestion": "One concrete improvement tip.",
+  "overall": "One sentence assessment."
+}
 
-Be specific, constructive, and encouraging. Focus on both content and communication style.`;
+Rules:
+- The "spoken" field must sound natural when read aloud.
+- Do NOT include markdown, labels, or bullet points in "spoken".
+- Keep sentences short and conversational.
+`;
+
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
@@ -157,7 +178,17 @@ Be specific, constructive, and encouraging. Focus on both content and communicat
       temperature: 0.7
     });
 
-    const feedback = completion.choices[0].message.content.trim();
+    const raw = completion.choices[0].message.content.trim();
+ let feedback;
+
+ try {
+   feedback = JSON.parse(raw);
+ } catch {
+   return res.status(500).json({
+     success: false,
+     message: 'AI returned invalid response format'
+   });
+ }
 
     // If interviewId provided, update the session
     let interview = null;
@@ -199,6 +230,8 @@ Be specific, constructive, and encouraging. Focus on both content and communicat
 const generateAudio = async (req, res, next) => {
   try {
     const { text, interviewId } = req.body;
+    
+    const spokenText = cleanForSpeech(text);
 
     // Validate input
     if (!text) {
@@ -208,7 +241,7 @@ const generateAudio = async (req, res, next) => {
       });
     }
 
-    if (text.length > 5000) {
+    if (spokenText.length > 5000) {
       return res.status(400).json({
         success: false,
         message: 'Text is too long. Maximum 5000 characters allowed.'
@@ -239,8 +272,8 @@ const generateAudio = async (req, res, next) => {
         text: text,
         model_id: 'eleven_monolingual_v1',
         voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75
+          stability: 0.4,
+          similarity_boost: 0.8
         }
       },
       responseType: 'arraybuffer'
@@ -265,7 +298,7 @@ const generateAudio = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: {
-        audioUrl,
+        audioBase64,
         interviewId: interview ? interview._id : null
       }
     });
