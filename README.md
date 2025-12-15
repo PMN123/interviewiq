@@ -270,8 +270,7 @@ REACT_APP_API_URL=http://localhost:5000/api
 4. Deploy
 
 ### Deployment Links
-- **Frontend:** [https://interviewiq.vercel.app](https://interviewiq.vercel.app)
-- **Backend API:** [https://interviewiq-api.onrender.com](https://interviewiq-api.onrender.com)
+- We haven't deployed out project yet, but we may do so in the future.
 
 ---
 
