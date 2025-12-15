@@ -1,7 +1,11 @@
 # InterviewIQ
 
 > AI-Powered Interview Preparation Platform
-https://youtu.be/6iDoK4Sc9AQ
+
+## 🎥 Demo
+
+[![InterviewIQ Demo](https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg)](https://youtu.be/6iDoK4Sc9AQ)
+
 
 ## 📋 Project Overview
 
