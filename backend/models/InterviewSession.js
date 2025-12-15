@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const interviewSessionSchema = new mongoose.Schema({
   userId: {
@@ -29,8 +29,8 @@ const interviewSessionSchema = new mongoose.Schema({
     default: ''
   },
   feedback: {
-    type: String,
-    default: ''
+    type: mongoose.Schema.Types.Mixed,
+    default: null
   },
   audioUrl: {
     type: String,
@@ -43,5 +43,4 @@ const interviewSessionSchema = new mongoose.Schema({
 // Index for faster queries by userId
 interviewSessionSchema.index({ userId: 1, createdAt: -1 });
 
-module.exports = mongoose.model('InterviewSession', interviewSessionSchema);
-
+export default mongoose.model('InterviewSession', interviewSessionSchema);

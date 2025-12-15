@@ -1,6 +1,7 @@
 {
   "name": "interviewiq-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "AI-powered interview preparation platform - Backend API",
   "main": "server.js",
   "scripts": {

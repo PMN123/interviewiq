@@ -1,4 +1,4 @@
-const InterviewSession = require('../models/InterviewSession');
+import InterviewSession from '../models/InterviewSession.js';
 
 // @desc    Create new interview session
 // @route   POST /api/interviews
@@ -21,7 +21,7 @@ const createInterview = async (req, res, next) => {
       difficulty,
       question: question || '',
       userAnswer: userAnswer || '',
-      feedback: feedback || '',
+      feedback: feedback || null,
       audioUrl: audioUrl || ''
     });
 
@@ -166,11 +166,10 @@ const deleteInterview = async (req, res, next) => {
   }
 };
 
-module.exports = {
+export {
   createInterview,
   getInterviews,
   getInterview,
   updateInterview,
   deleteInterview
 };
-

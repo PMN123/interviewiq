@@ -1,18 +1,18 @@
-const express = require('express');
-const router = express.Router();
-const {
+import express from "express";
+import {
   generateQuestion,
   analyzeAnswer,
   generateAudio
-} = require('../controllers/aiController');
-const { protect } = require('../middleware/auth');
+} from "../controllers/aiController.js";
+import { protect } from "../middleware/auth.js";
+
+const router = express.Router();
 
 // All routes are protected
 router.use(protect);
 
-router.post('/generate-question', generateQuestion);
-router.post('/analyze-answer', analyzeAnswer);
-router.post('/generate-audio', generateAudio);
+router.post("/generate-question", generateQuestion);
+router.post("/analyze-answer", analyzeAnswer);
+router.post("/generate-audio", generateAudio);
 
-module.exports = router;
-
+export default router;

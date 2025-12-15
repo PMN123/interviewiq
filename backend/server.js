@@ -1,18 +1,16 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const dotenv = require('dotenv');
+import "dotenv/config";
 
-// Load environment variables
-dotenv.config();
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import aiRoutes from "./routes/aiRoutes.js";
 
 // Import routes
-const authRoutes = require('./routes/authRoutes');
-const interviewRoutes = require('./routes/interviewRoutes');
-const aiRoutes = require('./routes/aiRoutes');
+import authRoutes from "./routes/authRoutes.js";
+import interviewRoutes from './routes/interviewRoutes.js';
 
 // Import error handler
-const errorHandler = require('./middleware/errorHandler');
+import errorHandler from './middleware/errorHandler.js';
 
 // Initialize Express app
 const app = express();
@@ -103,5 +101,5 @@ const startServer = async () => {
 
 startServer();
 
-module.exports = app;
+export default app;
 

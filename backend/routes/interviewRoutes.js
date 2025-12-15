@@ -1,13 +1,14 @@
-const express = require('express');
-const router = express.Router();
-const {
+import express from 'express';
+import {
   createInterview,
   getInterviews,
   getInterview,
   updateInterview,
   deleteInterview
-} = require('../controllers/interviewController');
-const { protect } = require('../middleware/auth');
+} from '../controllers/interviewController.js';
+import { protect } from '../middleware/auth.js';
+
+const router = express.Router();
 
 // All routes are protected
 router.use(protect);
@@ -21,5 +22,4 @@ router.route('/:id')
   .put(updateInterview)
   .delete(deleteInterview);
 
-module.exports = router;
-
+export default router;

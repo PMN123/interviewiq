@@ -1,6 +1,7 @@
-const OpenAI = require('openai');
-const axios = require('axios');
-const InterviewSession = require('../models/InterviewSession');
+import { openaiTts } from "../services/openaiTtsService.js";
+import OpenAI from "openai";
+import axios from "axios";
+import InterviewSession from "../models/InterviewSession.js";
 
 // Initialize OpenAI client
 const getOpenAIClient = () => {
@@ -126,20 +127,24 @@ const analyzeAnswer = async (req, res, next) => {
 
     const openai = getOpenAIClient();
 
-    const prompt = `You are an expert interview coach providing constructive feedback.
+    const prompt = `return only valid json. no markdown. no extra text.
 
-Interview Question: "${question}"
-
-Candidate's Answer: "${userAnswer}"
-
-Please analyze this answer and provide structured feedback including:
-
-1. **Strengths**: What the candidate did well
-2. **Areas for Improvement**: What could be better
-3. **Suggested Approach**: How to improve the answer
-4. **Overall Assessment**: Brief summary (1-2 sentences)
-
-Be specific, constructive, and encouraging. Focus on both content and communication style.`;
+    schema:
+    {
+      "spoken": string,
+      "strengths": string,
+      "improvements": string,
+      "suggestion": string,
+      "overall": string
+    }
+    
+    interview question: ${JSON.stringify(question)}
+    candidate answer: ${JSON.stringify(userAnswer)}
+    
+    requirements:
+    - spoken should be a 15-25 second natural summary suitable for text-to-speech
+    - keep each field concise but specific
+    `;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
@@ -157,7 +162,21 @@ Be specific, constructive, and encouraging. Focus on both content and communicat
       temperature: 0.7
     });
 
-    const feedback = completion.choices[0].message.content.trim();
+    const raw = completion.choices[0].message.content.trim();
+
+    let feedback;
+    try {
+      feedback = JSON.parse(raw);
+    } catch (e) {
+      // fallback so you never crash even if the model returns plain text
+      feedback = {
+        spoken: raw,
+        strengths: "",
+        improvements: "",
+        suggestion: "",
+        overall: raw
+      };
+    }
 
     // If interviewId provided, update the session
     let interview = null;
@@ -197,6 +216,9 @@ Be specific, constructive, and encouraging. Focus on both content and communicat
 // @route   POST /api/ai/generate-audio
 // @access  Private
 const generateAudio = async (req, res, next) => {
+  console.log("generateAudio hit", req.body);
+  const TTS_PROVIDER = process.env.TTS_PROVIDER || "elevenlabs";
+  console.log("TTS PROVIDER:", TTS_PROVIDER);
   try {
     const { text, interviewId } = req.body;
 
@@ -215,40 +237,45 @@ const generateAudio = async (req, res, next) => {
       });
     }
 
-    const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-    
-    if (!ELEVENLABS_API_KEY) {
-      return res.status(503).json({
-        success: false,
-        message: 'Audio service not configured'
-      });
-    }
-
     // Default voice ID (Rachel - professional female voice)
     const voiceId = 'EXAVITQu4vr4xnSDxMaL';
 
-    const response = await axios({
-      method: 'POST',
-      url: `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-      headers: {
-        'Accept': 'audio/mpeg',
-        'Content-Type': 'application/json',
-        'xi-api-key': ELEVENLABS_API_KEY
-      },
-      data: {
-        text: text,
-        model_id: 'eleven_monolingual_v1',
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75
-        }
-      },
-      responseType: 'arraybuffer'
-    });
+    let audioBuffer;
 
-    // Convert audio buffer to base64
-    const audioBase64 = Buffer.from(response.data).toString('base64');
-    const audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
+    if (TTS_PROVIDER === "openai") {
+      audioBuffer = await openaiTts(text);
+    } else {
+      const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+      if (!ELEVENLABS_API_KEY) {
+        return res.status(503).json({
+          success: false,
+          message: 'ElevenLabs audio service not configured'
+        });
+      }
+      // ⬇️ YOUR EXISTING ELEVENLABS CODE ⬇️
+      const response = await axios({
+        method: 'POST',
+        url: `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': ELEVENLABS_API_KEY
+        },
+        data: {
+          text: text,
+          model_id: 'eleven_monolingual_v1',
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75
+          }
+        },
+        responseType: 'arraybuffer'
+      });
+
+
+      audioBuffer = response.data;
+    }
+
 
     // If interviewId provided, update the session
     let interview = null;
@@ -261,16 +288,19 @@ const generateAudio = async (req, res, next) => {
         await interview.save();
       }
     }
-
-    res.status(200).json({
-      success: true,
-      data: {
-        audioUrl,
-        interviewId: interview ? interview._id : null
-      }
+    res.set({
+      "Content-Type": "audio/mpeg",
+      "Content-Length": audioBuffer.length
     });
+    
+    res.status(200).send(audioBuffer);
   } catch (error) {
-    console.error('ElevenLabs Error:', error.response?.data || error.message);
+    console.error('TTS Error:', {
+      provider: TTS_PROVIDER,
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
     
     if (error.response?.status === 401) {
       return res.status(503).json({
@@ -290,7 +320,7 @@ const generateAudio = async (req, res, next) => {
   }
 };
 
-module.exports = {
+export {
   generateQuestion,
   analyzeAnswer,
   generateAudio

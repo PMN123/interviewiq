@@ -107,8 +107,10 @@ const InterviewDetailPage = () => {
         text,
         interviewId: id
       });
-
-      setAudioUrl(response.data.data.audioUrl);
+      
+      const audioBlob = response.data;
+      const audioObjectUrl = URL.createObjectURL(audioBlob);
+      setAudioUrl(audioObjectUrl);
       
       // Auto-play the audio
       setTimeout(() => {
@@ -137,21 +139,21 @@ const InterviewDetailPage = () => {
   };
 
   const formatFeedback = (feedback) => {
-    if (!feedback) return null;
-    
-    // Split by markdown-style headers
-    const sections = feedback.split(/(?=\d\.\s\*\*|\*\*[^*]+\*\*:)/);
-    
-    return sections.map((section, index) => {
-      const trimmed = section.trim();
-      if (!trimmed) return null;
-      
-      return (
-        <p key={index} className="feedback-paragraph">
-          {trimmed}
-        </p>
-      );
-    });
+    if (!feedback) return [];
+  
+    if (typeof feedback === "object") {
+      return [
+        `Strengths: ${feedback.strengths}`,
+        `Improvements: ${feedback.improvements}`,
+        `Suggestion: ${feedback.suggestion}`,
+        `Overall: ${feedback.overall}`
+      ].filter(line => !line.endsWith(": undefined"));
+    }
+  
+    return feedback
+      .split(/(?=Strengths:|Improvements:|Suggestion:|Overall:)/)
+      .map(s => s.trim())
+      .filter(Boolean);
   };
 
   if (loading) {
@@ -330,7 +332,13 @@ const InterviewDetailPage = () => {
                 AI Feedback
               </h2>
               <button 
-                onClick={() => handleGenerateAudio(interview.feedback)}
+                onClick={() =>
+                  handleGenerateAudio(
+                    typeof interview.feedback === "object"
+                      ? interview.feedback.spoken || interview.feedback.overall
+                      : interview.feedback
+                  )
+                }
                 disabled={isGeneratingAudio}
                 className="audio-btn"
               >
@@ -351,7 +359,9 @@ const InterviewDetailPage = () => {
             </div>
             
             <div className="feedback-content">
-              {formatFeedback(interview.feedback)}
+              {formatFeedback(interview.feedback).map((line, idx) => (
+                <p key={idx}>{line}</p>
+              ))}
             </div>
           </section>
         )}
