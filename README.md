@@ -1,8 +1,7 @@
 # InterviewIQ
 
 > AI-Powered Interview Preparation Platform
-
-![InterviewIQ Banner](https://via.placeholder.com/1200x400/0a0a0f/8b5cf6?text=InterviewIQ+-+Master+Your+Interviews)
+https://youtu.be/6iDoK4Sc9AQ
 
 ## 📋 Project Overview
 
